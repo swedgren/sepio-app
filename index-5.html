@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<title>Sepio Capital</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Sepio" />
+<meta name="theme-color" content="#F4F3EE" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231B352E'/%3E%3Ctext x='90' y='84' font-family='Helvetica,Arial' font-size='34' font-weight='bold' fill='%23FFFFFF' text-anchor='middle' letter-spacing='3'%3ESEPIO%3C/text%3E%3Ctext x='90' y='112' font-family='Helvetica,Arial' font-size='16' fill='%236FA58C' text-anchor='middle' letter-spacing='4'%3ECAPITAL%3C/text%3E%3C/svg%3E" />
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #DAD5C9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+  #root { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px 22px; }
+  input[type=range] { accent-color: #2A5248; }
+  button { font-family: inherit; }
+  textarea { font-family: inherit; }
+  .scroll::-webkit-scrollbar { width: 0; }
+  .scroll { -webkit-overflow-scrolling: touch; }
+  .device { width: 390px; max-width: 100%; height: 800px; background: #F4F3EE; border-radius: 42px; border: 10px solid #12100C; box-shadow: 0 30px 60px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; }
+  .statusbar { display: flex; }
+  @media (max-width: 560px) {
+    body { background: #F4F3EE; }
+    #root { padding: 0; }
+    .device { width: 100%; max-width: none; height: 100dvh; border: none; border-radius: 0; box-shadow: none; }
+    .statusbar { display: none !important; }
+    .app-header { padding-top: calc(env(safe-area-inset-top) + 8px) !important; }
+    .app-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 12px) !important; }
+    .switcher { position: sticky; top: 0; border-radius: 0 !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const c = {
+  bg:"#F4F3EE", card:"#FFFFFF", ink:"#1A2A25", pine:"#2A5248", pineDeep:"#1B352E",
+  sage:"#6FA58C", sageSoft:"#E4EFE8", honey:"#CF9328", honeySoft:"#F6ECD3",
+  line:"#E5E3DB", muted:"#6E7A74", stone:"#EBE9E1", slate:"#5E7E93", violet:"#9A8AB5", clay:"#B5583E",
+};
+const big = (n) => n<0 ? "-"+big(-n) : n>=1e9?"$"+(n/1e9).toFixed(2)+"B":n>=1e6?"$"+(n/1e6).toFixed(1)+"M":n>=1e3?"$"+Math.round(n/1e3)+"k":"$"+Math.round(n);
+const dol = (n) => (n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US");
+
+const Ico = ({d,size=20,color="currentColor",w=1.9}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round">{d}</svg>;
+const I = {
+  pie:(p)=><Ico {...p} d={<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>} />,
+  chart:(p)=><Ico {...p} d={<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>} />,
+  plan:(p)=><Ico {...p} d={<><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></>} />,
+  file:(p)=><Ico {...p} d={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></>} />,
+  book:(p)=><Ico {...p} d={<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>} />,
+  home:(p)=><Ico {...p} d={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>} />,
+  invest:(p)=><Ico {...p} d={<><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></>} />,
+  link:(p)=><Ico {...p} d={<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></>} />,
+  chevR:(p)=><Ico {...p} d={<polyline points="9 18 15 12 9 6"/>} />,
+  chevL:(p)=><Ico {...p} d={<polyline points="15 18 9 12 15 6"/>} />,
+  check:(p)=><Ico {...p} d={<polyline points="20 6 9 17 4 12"/>} />,
+  alert:(p)=><Ico {...p} d={<><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>} />,
+  shield:(p)=><Ico {...p} d={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>} />,
+  lock:(p)=><Ico {...p} d={<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
+  spark:(p)=><Ico {...p} d={<path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/>} />,
+  refresh:(p)=><Ico {...p} d={<><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>} />,
+  pencil:(p)=><Ico {...p} d={<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>} />,
+  clock:(p)=><Ico {...p} d={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />,
+  down:(p)=><Ico {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />,
+  bell:(p)=><Ico {...p} d={<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>} />,
+};
+
+// ---------------- data ----------------
+const HH = { name:"Hollis Family", nw:142500000, ytd:8.4, entities:6, custodians:4 };
+const trend = [128,130.5,129.2,133.8,136.1,134.9,138.4,140.2,139.1,141,141.8,142.5].map(v=>v*1e6);
+const ALLOC = [
+  {name:"Growth drivers", role:"g", pct:55, color:c.pine},
+  {name:"Inflation sensitive", role:"d", pct:16, color:c.honey},
+  {name:"Deflation sensitive", role:"d", pct:14, color:c.slate},
+  {name:"Pure diversifiers", role:"d", pct:15, color:c.violet},
+];
+const entities = [
+  {name:"Family Revocable Trust", type:"Revocable trust", val:58200000, cust:"Fidelity", note:"Holds Holdings LLC + managed brokerage"},
+  {name:"Hollis Holdings LLC", type:"Investment LLC", val:34700000, cust:"Multiple", note:"Private equity, credit, real estate"},
+  {name:"Descendants' GST Trust", type:"Irrevocable / GST", val:22400000, cust:"Schwab", note:"For benefit of the children"},
+  {name:"Robert Hollis", type:"Individual taxable", val:9100000, cust:"Fidelity", note:"Concentrated legacy stock"},
+  {name:"Margaret Hollis IRA", type:"Retirement", val:6800000, cust:"Fidelity", note:"Tax-deferred"},
+  {name:"Family Foundation", type:"Private foundation", val:11300000, cust:"Goldman", note:"Charitable"},
+];
+const alts = [
+  {name:"Private equity", vintage:"2019-2024", commit:30000000, called:22000000, value:28400000},
+  {name:"Private credit", vintage:"2021-2024", commit:15000000, called:13000000, value:14100000},
+  {name:"Direct real estate", vintage:"-", commit:9000000, called:9000000, value:9200000},
+  {name:"Hedge funds", vintage:"-", commit:6000000, called:6000000, value:6100000},
+];
+const PERIODS = ["QTD","YTD","1Y","3Y","5Y","ITD"];
+const PERF = { QTD:{net:3.1,gross:3.4,bench:2.6,years:0.25}, YTD:{net:8.4,gross:9.0,bench:7.1,years:0.55}, "1Y":{net:11.2,gross:12.0,bench:9.8,years:1}, "3Y":{net:8.9,gross:9.7,bench:7.9,years:3}, "5Y":{net:9.6,gross:10.4,bench:8.6,years:5}, ITD:{net:8.1,gross:8.9,bench:6.9,years:12} };
+const VIEWS = [ {id:"4",name:"Household summary",g:"role"}, {id:"7",name:"By entity",g:"entity"}, {id:"11",name:"By asset class",g:"asset"}, {id:"12",name:"Private markets (IRR)",g:"private"} ];
+const CONTRIB = {
+  role:[{name:"Growth drivers",w:55,ret:12.8,con:7.0,color:c.pine},{name:"Inflation sensitive",w:16,ret:5.1,con:0.8,color:c.honey},{name:"Deflation sensitive",w:14,ret:1.9,con:0.3,color:c.slate},{name:"Pure diversifiers",w:15,ret:2.4,con:0.3,color:c.violet}],
+  entity:[{name:"Revocable Trust",w:41,ret:9.1,con:3.7,color:c.pine},{name:"Holdings LLC",w:24,ret:10.4,con:2.5,color:c.slate},{name:"GST Trust",w:16,ret:7.8,con:1.2,color:c.sage},{name:"Taxable",w:6,ret:14.2,con:0.9,color:c.honey},{name:"IRA",w:5,ret:6.1,con:0.3,color:c.violet}],
+  asset:[{name:"Public equity",w:38,ret:13.6,con:5.2,color:c.pine},{name:"Private equity",w:17,ret:11.0,con:1.9,color:c.sage},{name:"Private credit",w:10,ret:8.4,con:0.8,color:c.slate},{name:"Real assets",w:16,ret:5.1,con:0.8,color:c.honey},{name:"Hedge funds",w:15,ret:2.4,con:0.4,color:c.violet}],
+};
+const PRIVATE_PERF = [ {name:"Meridian Growth IV",v:"2019",irr:18.4,moic:1.8,dpi:0.6}, {name:"Harbor Direct Lending II",v:"2021",irr:9.6,moic:1.2,dpi:0.3}, {name:"Cascade Real Assets",v:"2020",irr:7.1,moic:1.3,dpi:0.4}, {name:"Anselm Trend",v:"2018",irr:6.2,moic:1.4,dpi:0.0} ];
+const TAX = {
+  household:{ realized:620000, harvested:340000, saved:81000,
+    accounts:[{n:"Managed models",w:"Fidelity",h:180000,k:"managed"},{n:"Direct index",w:"Schwab - Quantinno",h:142000,k:"managed"},{n:"Personal brokerage",w:"Frec",h:18000,k:"held-away",gain:true}],
+    flag:"Your Schwab direct index harvested a loss in a name your Frec account rebought 6 days earlier. Left alone that loss is disallowed. We adjusted the harvest to protect it." },
+  self:{ realized:4300, harvested:2100, saved:520,
+    accounts:[{n:"Your trust portfolio",w:"Schwab",h:2100,k:"managed"}],
+    flag:null },
+};
+const NG = { trust:"Ava's GST Trust share", val:1850000, ytd:9.1 };
+const MODELS = {
+  Conservative:{ret:4.5, a:[{name:"Growth drivers",role:"g",pct:30,color:c.pine},{name:"Inflation sensitive",role:"d",pct:24,color:c.honey},{name:"Deflation sensitive",role:"d",pct:24,color:c.slate},{name:"Pure diversifiers",role:"d",pct:22,color:c.violet}]},
+  Balanced:{ret:6.5, a:ALLOC},
+  Growth:{ret:7.8, a:[{name:"Growth drivers",role:"g",pct:78,color:c.pine},{name:"Inflation sensitive",role:"d",pct:8,color:c.honey},{name:"Deflation sensitive",role:"d",pct:6,color:c.slate},{name:"Pure diversifiers",role:"d",pct:8,color:c.violet}]},
+};
+const RESEARCH = {
+  firm:[
+    {tag:"Quarterly outlook",title:"Q3 2026: Diversifiers earn their keep",date:"Jul 8",read:"6 min",teaser:"Why the defensive sleeve held up when duration alone would not have."},
+    {tag:"Market note",title:"What we're watching in credit spreads",date:"Jun 24",read:"4 min",teaser:"Spreads are tight. A statement about compensation, not a prediction."},
+    {tag:"Education",title:"Why we build by role, not asset class",date:"Jun 3",read:"5 min",teaser:"A 35% bond allocation defends one environment. We defend several."},
+  ],
+  funds:[
+    {fund:"Meridian Growth IV",cat:"Private equity",date:"Jul 10",type:"Quarterly letter",note:"Q2 mark up 3.1%. Two portfolio companies signed LOIs.",flag:null},
+    {fund:"Harbor Direct Lending II",cat:"Private credit",date:"Jul 2",type:"Capital call",note:"Call of $1.4M due Jul 24. Funded from the liquid reserve.",flag:"Action noted"},
+    {fund:"Cascade Real Assets",cat:"Inflation sensitive",date:"Jun 28",type:"Quarterly letter",note:"Energy infrastructure drove returns. Occupancy stable.",flag:null},
+  ],
+};
+
+// ---------------- Monte Carlo ----------------
+const SIMS=250;
+function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function runmc({start,contrib,years,ret,vol,infl=2.5}){
+  const mu=ret/100,sig=vol/100;let ok=0;const by=Array.from({length:years+1},()=>[]);
+  for(let s=0;s<SIMS;s++){let b=start;by[0].push(b);for(let y=1;y<=years;y++){b=b*(1+mu+sig*randn())+contrib;if(b<0)b=0;by[y].push(b);}if(b>0)ok++;}
+  const path=by.map((arr,y)=>{const a=arr.slice().sort((x,z)=>x-z);const at=(p)=>a[Math.min(a.length-1,Math.floor(p/100*a.length))];return {y,p10:at(10),p50:at(50),p90:at(90)};});
+  return {path};
+}
+
+// ---------------- charts ----------------
+function Spark({data,w=330,h=54}){
+  const mn=Math.min(...data)*0.985,mx=Math.max(...data)*1.005;
+  const x=i=>i/(data.length-1)*w, y=v=>h-(v-mn)/(mx-mn)*(h-8)-2;
+  const ln=data.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  return <svg width="100%" height={h} viewBox={"0 0 "+w+" "+h} preserveAspectRatio="none"><defs><linearGradient id="sp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={c.sage} stopOpacity="0.5"/><stop offset="100%" stopColor={c.sage} stopOpacity="0"/></linearGradient></defs><path d={ln+" L "+w+" "+h+" L 0 "+h+" Z"} fill="url(#sp)"/><path d={ln} fill="none" stroke={c.sage} strokeWidth="2.5"/></svg>;
+}
+function Donut({data,size=108}){
+  const R=size/2-4,r=size/2-22,cx=size/2,cy=size/2;let acc=0;
+  const arcs=data.map(d=>{const v=d.pct;const a0=acc/100*2*Math.PI-Math.PI/2;acc+=v;const a1=acc/100*2*Math.PI-Math.PI/2;const bg=v>50?1:0;const P=(rad,a)=>[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];const[x0,y0]=P(R,a0),[x1,y1]=P(R,a1),[x2,y2]=P(r,a1),[x3,y3]=P(r,a0);return {d:`M ${x0} ${y0} A ${R} ${R} 0 ${bg} 1 ${x1} ${y1} L ${x2} ${y2} A ${r} ${r} 0 ${bg} 0 ${x3} ${y3} Z`,color:d.color};});
+  return <svg width={size} height={size}>{arcs.map((a,i)=><path key={i} d={a.d} fill={a.color} stroke={c.card} strokeWidth="2"/>)}</svg>;
+}
+function Fan({path,years,w=330,h=150}){
+  const pad=42;const mx=Math.max(...path.map(p=>p.p90))*1.05||1;
+  const x=y=>pad+y/years*(w-pad-6), Y=v=>6+(1-v/mx)*(h-24);
+  const band=(lo,hi)=>path.map((p,i)=>(i?"L":"M")+x(p.y).toFixed(1)+" "+Y(p[hi]).toFixed(1)).join(" ")+" "+path.slice().reverse().map(p=>"L"+x(p.y).toFixed(1)+" "+Y(p[lo]).toFixed(1)).join(" ")+" Z";
+  const med=path.map((p,i)=>(i?"L":"M")+x(p.y).toFixed(1)+" "+Y(p.p50).toFixed(1)).join(" ");
+  return <svg width="100%" height={h} viewBox={"0 0 "+w+" "+h}><defs><linearGradient id="fn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={c.sage} stopOpacity="0.22"/><stop offset="100%" stopColor={c.sage} stopOpacity="0.03"/></linearGradient></defs>{[0,mx/2,mx].map((v,i)=><text key={i} x={pad-6} y={Y(v)+3} textAnchor="end" fontSize="9" fill={c.muted}>{big(v)}</text>)}<path d={band("p10","p90")} fill="url(#fn)"/><path d={med} fill="none" stroke={c.pine} strokeWidth="2.4"/>{[0,Math.round(years/2),years].map((t,i)=><text key={i} x={x(t)} y={h-2} textAnchor="middle" fontSize="9" fill={c.muted}>{"yr "+t}</text>)}</svg>;
+}
+function DualLine({a,b,w=330,h=140}){
+  const all=a.concat(b);const mn=Math.min(...all)*0.99,mx=Math.max(...all)*1.01;
+  const x=(i,n)=>40+i/(n-1)*(w-46), y=v=>8+(1-(v-mn)/(mx-mn))*(h-30);
+  const path=arr=>arr.map((v,i)=>(i?"L":"M")+x(i,arr.length).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  return <svg width="100%" height={h} viewBox={"0 0 "+w+" "+h}><defs><linearGradient id="dl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={c.sage} stopOpacity="0.26"/><stop offset="100%" stopColor={c.sage} stopOpacity="0.02"/></linearGradient></defs>{[mn,(mn+mx)/2,mx].map((v,i)=><g key={i}><line x1="40" y1={y(v)} x2={w-6} y2={y(v)} stroke={c.line} strokeDasharray="2 3"/><text x="34" y={y(v)+3} textAnchor="end" fontSize="9" fill={c.muted}>{Math.round(v)}</text></g>)}<path d={path(a)+" L "+x(a.length-1,a.length)+" "+(h-22)+" L "+x(0,a.length)+" "+(h-22)+" Z"} fill="url(#dl)"/><path d={path(b)} fill="none" stroke={c.muted} strokeWidth="1.6" strokeDasharray="4 3"/><path d={path(a)} fill="none" stroke={c.pine} strokeWidth="2.6"/></svg>;
+}
+
+// ---------------- shared ----------------
+const Eyebrow = ({children}) => <div style={{color:c.muted,letterSpacing:"0.13em",fontSize:10.5,fontWeight:700,textTransform:"uppercase"}}>{children}</div>;
+const Card = ({children,style}) => <div style={{background:c.card,border:"1px solid "+c.line,borderRadius:18,padding:16,...style}}>{children}</div>;
+function Seg({opts,val,set}){
+  return <div style={{display:"flex",background:c.stone,borderRadius:12,padding:4}}>{opts.map(([id,label])=>{const on=val===id;return <button key={id} onClick={()=>set(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:9,padding:9,fontSize:12.5,fontWeight:700,background:on?c.card:"transparent",color:on?c.pine:c.muted,boxShadow:on?"0 1px 3px rgba(0,0,0,0.07)":"none"}}>{label}</button>;})}</div>;
+}
+function AllocRow({data}){
+  const gd=data.find(x=>x.role==="g")||data[0];const divs=data.filter(x=>x.role==="d");const dt=divs.reduce((s,x)=>s+x.pct,0);
+  return <div style={{display:"flex",alignItems:"center",gap:14}}>
+    <div style={{width:108,height:108,position:"relative",flexShrink:0}}><Donut data={data}/><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:17,fontWeight:700,color:c.ink}}>{gd.pct}<span style={{fontSize:11,color:c.muted}}>/{dt}</span></span><span style={{fontSize:7.5,color:c.muted,letterSpacing:"0.05em"}}>GROWTH / DIV</span></div></div>
+    <div style={{flex:1}}>
+      <div style={{display:"flex",justifyContent:"space-between",paddingBottom:6}}><span style={{display:"flex",alignItems:"center",gap:7}}><span style={{width:9,height:9,borderRadius:3,background:gd.color}}/><span style={{fontSize:12,fontWeight:700,color:c.ink}}>Growth drivers</span></span><span style={{fontSize:12.5,fontWeight:700,color:c.ink}}>{gd.pct}%</span></div>
+      <div style={{borderTop:"1px solid "+c.line,paddingTop:6}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:12,fontWeight:700,color:c.ink}}>Diversifiers</span><span style={{fontSize:12.5,fontWeight:700,color:c.ink}}>{dt}%</span></div>{divs.map(s=><div key={s.name} style={{display:"flex",justifyContent:"space-between",padding:"2px 0"}}><span style={{display:"flex",alignItems:"center",gap:7}}><span style={{width:6,height:6,borderRadius:2,background:s.color}}/><span style={{fontSize:11,color:c.muted}}>{s.name}</span></span><span style={{fontSize:11.5,fontWeight:600,color:c.ink}}>{s.pct}%</span></div>)}</div>
+    </div>
+  </div>;
+}
+const SyncNote = () => <div style={{display:"flex",alignItems:"center",gap:6,color:c.muted,fontSize:10.5,margin:"12px 2px 20px"}}><I.refresh size={11} color={c.muted}/> One reconciled number, from your data layer.</div>;
+
+// ========================================================================
+function App(){
+  const [persona,setPersona] = useState("client");
+  const P = {
+    client:{who:"Robert Hollis", entitlement:"household", nav:[["portfolio","Portfolio",I.pie],["perf","Performance",I.chart],["plan","Plan",I.plan],["ips","IPS",I.file],["research","Research",I.book]]},
+    nextgen:{who:"Ava Hollis", entitlement:"self", nav:[["home","Home",I.home],["invest","Invest",I.invest],["plan","Plan",I.plan],["learn","Learn",I.book]]},
+    prospect:{who:"Guest", entitlement:"none", nav:[["link","Link",I.link],["plan","Plan",I.plan],["invest","Invest",I.invest],["learn","Learn",I.book]]},
+  };
+  const cur = P[persona];
+  const [tab,setTab] = useState(cur.nav[0][0]);
+  const validTab = cur.nav.some(n=>n[0]===tab)?tab:cur.nav[0][0];
+  const setP = (k)=>{ setPersona(k); setTab(P[k].nav[0][0]); };
+
+  return <>
+    <div className="switcher" style={{width:390,maxWidth:"100%",background:c.pineDeep,padding:"7px 8px 8px",borderRadius:12,marginBottom:10,zIndex:20}}>
+      <div style={{fontSize:8.5,color:"rgba(255,255,255,0.4)",letterSpacing:"0.14em",fontWeight:700,textAlign:"center",marginBottom:6}}>DEMO CONTROL - IN PRODUCTION THIS IS SET BY LOGIN</div>
+      <div style={{display:"flex",gap:6}}>{[["client","Client"],["nextgen","Next gen"],["prospect","Prospect"]].map(([k,l])=>{const on=persona===k;return <button key={k} onClick={()=>setP(k)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:8,padding:"8px 4px",fontSize:12,fontWeight:700,background:on?c.sage:"transparent",color:on?c.pineDeep:"rgba(255,255,255,0.65)"}}>{l}</button>;})}</div>
+    </div>
+
+    <div className="device">
+      <div className="statusbar" style={{alignItems:"center",justifyContent:"space-between",padding:"12px 26px 4px",flexShrink:0}}>
+        <span style={{fontSize:13,fontWeight:700,color:c.ink}}>9:41</span>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{display:"flex",gap:2}}>{[6,9,12,15].map(h=><div key={h} style={{width:3,height:h,background:c.ink,borderRadius:1}}/>)}</div><div style={{width:22,height:12,border:"1.5px solid "+c.ink,borderRadius:3,position:"relative"}}><div style={{position:"absolute",inset:1.5,width:"70%",background:c.ink,borderRadius:1}}/></div></div>
+      </div>
+      <div className="app-header" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 22px 10px",flexShrink:0}}>
+        <div><div style={{fontSize:17,fontWeight:700,color:c.pineDeep,letterSpacing:"0.06em"}}>SEPIO</div><div style={{fontSize:9.5,color:c.muted,letterSpacing:"0.12em",marginTop:-1}}>CAPITAL</div></div>
+        <div style={{display:"flex",alignItems:"center",gap:9}}><span style={{fontSize:11,color:c.muted}}>{cur.who}</span><div style={{width:33,height:33,borderRadius:99,background:persona==="prospect"?c.stone:c.pine,color:persona==="prospect"?c.muted:"white",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12.5}}>{cur.who.split(" ").map(x=>x[0]).join("").slice(0,2)}</div></div>
+      </div>
+      <div className="scroll" style={{flex:1,overflowY:"auto"}}>
+        {persona==="client" && <Client tab={validTab} entitlement={cur.entitlement}/>}
+        {persona==="nextgen" && <NextGen tab={validTab}/>}
+        {persona==="prospect" && <Prospect tab={validTab}/>}
+      </div>
+      <div className="app-nav" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 10px 20px",borderTop:"1px solid "+c.line,background:c.card,flexShrink:0}}>
+        {cur.nav.map(([id,label,Icon])=>{const on=validTab===id;return <button key={id} onClick={()=>setTab(id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:"none",background:"transparent",cursor:"pointer",padding:"4px 1px",flex:1}}><Icon size={20} color={on?c.pine:c.muted} w={on?2.4:1.9}/><span style={{fontSize:9.5,fontWeight:on?700:500,color:on?c.pine:c.muted,whiteSpace:"nowrap"}}>{label}</span></button>;})}
+      </div>
+    </div>
+    <div style={{width:390,maxWidth:"100%",marginTop:8,textAlign:"center",fontSize:10.5,color:c.pineDeep,opacity:0.55}}>Prototype v5 - one app, provisioned by status - illustrative data</div>
+  </>;
+}
+
+// ---------------- CLIENT ----------------
+function Client({tab,entitlement}){
+  if(tab==="portfolio") return <Portfolio/>;
+  if(tab==="perf") return <Performance entitlement={entitlement}/>;
+  if(tab==="plan") return <Plan start={118000000} contrib={0} label="household spending + gifting"/>;
+  if(tab==="ips") return <IPS/>;
+  if(tab==="research") return <Research/>;
+  return null;
+}
+
+function Portfolio(){
+  const [seg,setSeg]=useState("overview");
+  const illiquid=alts.reduce((s,a)=>s+a.value,0);
+  const illiqPct=Math.round(illiquid/HH.nw*100);
+  const unfunded=alts.reduce((s,a)=>s+(a.commit-a.called),0);
+  return <div style={{padding:"6px 18px 0"}}>
+    <div style={{background:c.pineDeep,borderRadius:22,padding:20,color:"white",overflow:"hidden"}}>
+      <Eyebrow><span style={{color:"rgba(255,255,255,0.55)"}}>{HH.name} - total wealth</span></Eyebrow>
+      <div style={{fontSize:38,fontWeight:700,marginTop:6,fontVariantNumeric:"tabular-nums"}}>{big(HH.nw)}</div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}><I.spark size={13} color={c.sage} w={2.2}/><span style={{color:c.sage,fontWeight:600,fontSize:13}}>+{HH.ytd}% YTD</span><span style={{color:"rgba(255,255,255,0.45)",fontSize:12.5}}>- {HH.entities} entities - {HH.custodians} custodians</span></div>
+      <div style={{margin:"10px -20px -20px"}}><Spark data={trend}/></div>
+    </div>
+    <div style={{margin:"14px 0"}}><Seg opts={[["overview","Overview"],["entities","Entities"],["alts","Private"]]} val={seg} set={setSeg}/></div>
+    {seg==="overview" && <>
+      <Card><Eyebrow>How the money works</Eyebrow><div style={{marginTop:10}}><AllocRow data={ALLOC}/></div><div style={{fontSize:10.5,color:c.muted,marginTop:10,lineHeight:1.45,borderTop:"1px solid "+c.line,paddingTop:9}}>Defense isn't just bonds. It's spread across what works in inflation, in deflation, and on its own.</div></Card>
+      <Card style={{marginTop:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><Eyebrow>Liquidity</Eyebrow><span style={{fontSize:11,color:c.muted}}>{big(illiquid)} private</span></div>
+        <div style={{display:"flex",height:10,borderRadius:99,overflow:"hidden",marginTop:10}}><div style={{width:(100-illiqPct)+"%",background:c.sage}}/><div style={{width:illiqPct+"%",background:c.slate}}/></div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}><span style={{fontSize:11.5,color:c.muted}}><b style={{color:c.ink}}>{100-illiqPct}%</b> liquid</span><span style={{fontSize:11.5,color:c.muted}}><b style={{color:c.ink}}>{illiqPct}%</b> illiquid</span></div>
+      </Card>
+      <SyncNote/>
+    </>}
+    {seg==="entities" && <>
+      {entities.map(e=><Card key={e.name} style={{marginBottom:10,padding:15}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><span style={{fontSize:9.5,fontWeight:700,color:c.pine,background:c.sageSoft,borderRadius:99,padding:"2px 8px"}}>{e.type}</span><div style={{fontSize:14,fontWeight:700,color:c.ink,marginTop:7}}>{e.name}</div><div style={{fontSize:11,color:c.muted,marginTop:2}}>{e.note}</div></div><div style={{fontSize:15,fontWeight:700,color:c.ink,fontVariantNumeric:"tabular-nums"}}>{big(e.val)}</div></div></Card>)}
+      <SyncNote/>
+    </>}
+    {seg==="alts" && <>
+      {alts.map(a=>{const uf=a.commit-a.called;const cp=Math.round(a.called/a.commit*100);return <Card key={a.name} style={{marginBottom:10,padding:15}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:14,fontWeight:700,color:c.ink}}>{a.name}</div><div style={{fontSize:11,color:c.muted,marginTop:1}}>{a.vintage}</div></div><div style={{fontSize:15,fontWeight:700,color:c.ink,fontVariantNumeric:"tabular-nums"}}>{big(a.value)}</div></div><div style={{height:7,borderRadius:99,background:c.stone,overflow:"hidden",marginTop:11}}><div style={{height:"100%",width:cp+"%",background:c.slate,borderRadius:99}}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:7,fontSize:10.5,color:c.muted}}><span>Called {big(a.called)} of {big(a.commit)}</span>{uf>0 && <span style={{color:c.honey,fontWeight:700}}>{big(uf)} unfunded</span>}</div></Card>;})}
+      <div style={{background:c.honeySoft,borderRadius:14,padding:"12px 14px",display:"flex",gap:9,marginBottom:8}}><I.alert size={15} color={c.honey} w={2.2}/><div style={{fontSize:11.5,color:c.ink,lineHeight:1.45}}><b>{big(unfunded)} committed but not yet called.</b> We hold liquid reserves so a capital call never forces a sale.</div></div>
+      <SyncNote/>
+    </>}
+  </div>;
+}
+
+function Performance({entitlement}){
+  const [seg,setSeg]=useState("returns");
+  const [period,setPeriod]=useState("YTD");
+  const [viewId,setViewId]=useState("4");
+  const [net,setNet]=useState(true);
+  const [pick,setPick]=useState(false);
+  const p=PERF[period];const view=VIEWS.find(v=>v.id===viewId);
+  const ret=net?p.net:p.gross;const excess=ret-p.bench;
+  const rows=view.g==="private"?null:CONTRIB[view.g];
+  const series=useMemo(()=>{const pts=18;const A=[],B=[];let pv=100,bv=100;const ps=Math.pow(1+ret/100,p.years/pts),bs=Math.pow(1+p.bench/100,p.years/pts);for(let i=0;i<=pts;i++){A.push(pv*(1+Math.sin(i*1.7)*0.012));B.push(bv*(1+Math.sin(i*1.3)*0.006));pv*=ps;bv*=bs;}return {A,B};},[period,net]);
+
+  return <div style={{padding:"6px 18px 0"}}>
+    <div style={{marginBottom:12}}><Seg opts={[["returns","Returns"],["taxes","Taxes"]]} val={seg} set={setSeg}/></div>
+    {seg==="returns" && <>
+      <button onClick={()=>setPick(!pick)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",background:c.card,border:"1px solid "+c.line,borderRadius:12,padding:"11px 14px"}}><span style={{display:"flex",flexDirection:"column",alignItems:"flex-start"}}><span style={{fontSize:9.5,color:c.muted,letterSpacing:"0.1em",fontWeight:700}}>YOUR VIEW</span><span style={{fontSize:14,fontWeight:700,color:c.ink,marginTop:2}}>{view.name}</span></span><span style={{transform:pick?"rotate(90deg)":"none",display:"flex"}}><I.chevR size={17} color={c.muted}/></span></button>
+      {pick && <div style={{background:c.card,border:"1px solid "+c.line,borderRadius:12,marginTop:6,overflow:"hidden"}}>{VIEWS.map(v=><button key={v.id} onClick={()=>{setViewId(v.id);setPick(false);}} style={{width:"100%",textAlign:"left",cursor:"pointer",background:v.id===viewId?c.sageSoft:"transparent",border:"none",borderTop:"1px solid "+c.line,padding:"12px 14px",fontSize:13.5,fontWeight:v.id===viewId?700:500,color:v.id===viewId?c.pine:c.ink,display:"flex",justifyContent:"space-between",alignItems:"center"}}>{v.name}{v.id===viewId && <I.check size={15} color={c.pine}/>}</button>)}<div style={{fontSize:10.5,color:c.muted,padding:"10px 14px",borderTop:"1px solid "+c.line,lineHeight:1.45,background:c.bg}}>Your saved Addepar views. Ask your advisor to add one and it appears here.</div></div>}
+      <div style={{display:"flex",background:c.stone,borderRadius:10,padding:3,margin:"12px 0"}}>{PERIODS.map(k=><button key={k} onClick={()=>setPeriod(k)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:8,padding:"8px 2px",fontSize:11.5,fontWeight:700,background:period===k?c.card:"transparent",color:period===k?c.pine:c.muted,boxShadow:period===k?"0 1px 2px rgba(0,0,0,0.07)":"none"}}>{k}</button>)}</div>
+      <Card>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><Eyebrow>{period} - {net?"net of fees":"gross"}</Eyebrow><div style={{fontSize:38,fontWeight:700,color:c.pine,marginTop:5,lineHeight:1,fontVariantNumeric:"tabular-nums"}}>+{ret.toFixed(1)}%</div></div><button onClick={()=>setNet(!net)} style={{cursor:"pointer",border:"1px solid "+c.line,background:c.bg,borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,color:c.pine}}>{net?"Net":"Gross"}</button></div>
+        <div style={{display:"flex",gap:16,marginTop:14,paddingTop:12,borderTop:"1px solid "+c.line}}><div><div style={{fontSize:10.5,color:c.muted}}>Benchmark</div><div style={{fontSize:15,fontWeight:700,color:c.ink,marginTop:2}}>+{p.bench.toFixed(1)}%</div></div><div><div style={{fontSize:10.5,color:c.muted}}>Excess</div><div style={{fontSize:15,fontWeight:700,color:excess>=0?c.pine:c.clay,marginTop:2}}>{excess>=0?"+":""}{excess.toFixed(1)}%</div></div><div style={{marginLeft:"auto",textAlign:"right"}}><div style={{fontSize:10.5,color:c.muted}}>Method</div><div style={{fontSize:12,fontWeight:600,color:c.ink,marginTop:3}}>Time-weighted</div></div></div>
+      </Card>
+      <Card style={{marginTop:12,padding:"15px 10px 8px"}}><div style={{padding:"0 6px"}}><Eyebrow>Growth of $100</Eyebrow></div><div style={{marginTop:6}}><DualLine a={series.A} b={series.B}/></div><div style={{display:"flex",gap:14,padding:"0 8px"}}><span style={{display:"flex",alignItems:"center",gap:5}}><span style={{width:14,height:3,borderRadius:2,background:c.pine}}/><span style={{fontSize:10.5,color:c.muted}}>Portfolio</span></span><span style={{display:"flex",alignItems:"center",gap:5}}><span style={{width:14,borderTop:"1.6px dashed "+c.muted}}/><span style={{fontSize:10.5,color:c.muted}}>Benchmark</span></span></div></Card>
+      {rows && <Card style={{marginTop:12}}><Eyebrow>Contribution to return</Eyebrow>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 44px 52px",gap:6,marginTop:10,paddingBottom:7,borderBottom:"1px solid "+c.line}}><span style={{fontSize:9.5,color:c.muted,fontWeight:700,letterSpacing:"0.05em"}}>{view.g==="entity"?"ENTITY":view.g==="asset"?"ASSET CLASS":"ROLE"}</span><span style={{fontSize:9.5,color:c.muted,fontWeight:700,textAlign:"right"}}>RET</span><span style={{fontSize:9.5,color:c.muted,fontWeight:700,textAlign:"right"}}>CONTRIB</span></div>
+        {rows.map(r=><div key={r.name} style={{display:"grid",gridTemplateColumns:"1fr 44px 52px",gap:6,alignItems:"center",padding:"10px 0",borderBottom:"1px solid "+c.line}}><div><div style={{display:"flex",alignItems:"center",gap:7}}><span style={{width:7,height:7,borderRadius:2,background:r.color,flexShrink:0}}/><span style={{fontSize:12.5,color:c.ink,fontWeight:600}}>{r.name}</span></div><div style={{height:4,borderRadius:99,background:c.stone,marginTop:5,marginLeft:14,overflow:"hidden"}}><div style={{height:"100%",width:r.w+"%",background:r.color,opacity:0.5}}/></div></div><span style={{fontSize:12.5,color:c.ink,textAlign:"right",fontVariantNumeric:"tabular-nums"}}>{r.ret.toFixed(1)}%</span><span style={{fontSize:12.5,fontWeight:700,color:c.pine,textAlign:"right",fontVariantNumeric:"tabular-nums"}}>+{r.con.toFixed(1)}%</span></div>)}
+      </Card>}
+      {view.g==="private" && <Card style={{marginTop:12}}><Eyebrow>Since inception</Eyebrow><div style={{fontSize:11,color:c.muted,marginTop:4,marginBottom:8,lineHeight:1.45}}>Private funds use IRR and multiple, not time-weighted return, since you don't control the cash-flow timing.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 40px 40px 40px",gap:6,paddingBottom:7,borderBottom:"1px solid "+c.line}}><span style={{fontSize:9.5,color:c.muted,fontWeight:700}}>FUND</span><span style={{fontSize:9.5,color:c.muted,fontWeight:700,textAlign:"right"}}>IRR</span><span style={{fontSize:9.5,color:c.muted,fontWeight:700,textAlign:"right"}}>MOIC</span><span style={{fontSize:9.5,color:c.muted,fontWeight:700,textAlign:"right"}}>DPI</span></div>
+        {PRIVATE_PERF.map(f=><div key={f.name} style={{display:"grid",gridTemplateColumns:"1fr 40px 40px 40px",gap:6,alignItems:"center",padding:"10px 0",borderBottom:"1px solid "+c.line}}><div><div style={{fontSize:12.5,color:c.ink,fontWeight:600}}>{f.name}</div><div style={{fontSize:10,color:c.muted,marginTop:1}}>Vintage {f.v}</div></div><span style={{fontSize:12.5,fontWeight:700,color:c.pine,textAlign:"right"}}>{f.irr.toFixed(1)}%</span><span style={{fontSize:12.5,color:c.ink,textAlign:"right"}}>{f.moic.toFixed(1)}x</span><span style={{fontSize:12.5,color:c.muted,textAlign:"right"}}>{f.dpi.toFixed(1)}x</span></div>)}
+      </Card>}
+      <div style={{fontSize:10.5,color:c.muted,margin:"12px 2px 20px",lineHeight:1.45}}>Returns are time-weighted, {net?"net":"gross"} of fees. Calculated in Addepar, displayed here, not recalculated.</div>
+    </>}
+    {seg==="taxes" && <TaxView scope={entitlement}/>}
+  </div>;
+}
+
+function TaxView({scope}){
+  const t = TAX[scope==="self"?"self":"household"];
+  const net = t.realized - t.harvested;
+  return <div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+      <Eyebrow>YTD taxes</Eyebrow>
+      <span style={{fontSize:9.5,fontWeight:700,color:c.pine,background:c.sageSoft,borderRadius:99,padding:"3px 9px"}}>{scope==="self"?"YOUR ACCOUNTS":"WHOLE HOUSEHOLD"}</span>
+    </div>
+    <div style={{display:"flex",gap:10}}>
+      <Card style={{flex:1,padding:14}}><Eyebrow>Losses harvested</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.pine,marginTop:6}}>{big(t.harvested)}</div><div style={{fontSize:10.5,color:c.muted}}>across {t.accounts.length} account{t.accounts.length>1?"s":""}</div></Card>
+      <Card style={{flex:1,padding:14}}><Eyebrow>Est. tax saved</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.ink,marginTop:6}}>{big(t.saved)}</div><div style={{fontSize:10.5,color:c.muted}}>vs. no harvesting</div></Card>
+    </div>
+    <Card style={{marginTop:12}}>
+      <Eyebrow>Realized this year</Eyebrow>
+      <div style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid "+c.line,marginTop:6}}><span style={{fontSize:12.5,color:c.muted}}>Gains realized</span><span style={{fontSize:13,fontWeight:600,color:c.ink}}>{dol(t.realized)}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid "+c.line}}><span style={{fontSize:12.5,color:c.muted}}>Losses harvested</span><span style={{fontSize:13,fontWeight:600,color:c.pine}}>{dol(-t.harvested)}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",padding:"9px 0"}}><span style={{fontSize:12.5,color:c.ink,fontWeight:700}}>Net taxable</span><span style={{fontSize:13,fontWeight:700,color:c.ink}}>{dol(net)}</span></div>
+    </Card>
+    <Card style={{marginTop:12}}>
+      <Eyebrow>By account</Eyebrow>
+      <div style={{marginTop:6}}>{t.accounts.map(a=><div key={a.n} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid "+c.line}}><div><div style={{fontSize:12.5,fontWeight:600,color:c.ink}}>{a.n}</div><div style={{fontSize:10.5,color:c.muted,marginTop:1}}>{a.w}</div></div><div style={{textAlign:"right"}}><div style={{fontSize:12.5,fontWeight:700,color:a.gain?c.clay:c.pine}}>{a.gain?"+":""}{big(a.h)}</div><span style={{fontSize:9,fontWeight:700,color:a.k==="held-away"?c.slate:c.pine,background:a.k==="held-away"?c.stone:c.sageSoft,borderRadius:99,padding:"1px 6px"}}>{a.k==="held-away"?"held-away":"managed"}</span></div></div>)}</div>
+    </Card>
+    {t.flag && <div style={{background:c.honeySoft,borderRadius:14,padding:14,marginTop:12,display:"flex",gap:10}}><I.alert size={16} color={c.honey} w={2.2}/><div style={{fontSize:12,color:c.ink,lineHeight:1.5}}><b>Wash-sale caught across custodians.</b> {t.flag}</div></div>}
+    <div style={{fontSize:10.5,color:c.muted,margin:"12px 2px 20px",lineHeight:1.45}}>{scope==="self"?"Scoped to your accounts only." : "Coordinated across every account and custodian in the household - the thing a single-account app can't do."} Illustrative, not tax advice.</div>
+  </div>;
+}
+
+function IPS(){
+  const INIT={ "Return":"Preserve real purchasing power across generations while funding roughly $2.8M of annual lifestyle spending. Long-term target of about 6.5% net of fees.", "Risk":"Balanced posture. Built by role, not asset class: growth drivers carry return; defense is split across inflation-sensitive, deflation-sensitive, and pure diversifiers so it holds up across regimes rather than in one. Tolerate a drawdown near 20% in a poor year.", "Time horizon":"Multi-generational. Modeled over 30 years, but capital is intended to outlast the current generation and pass to the GST trust beneficiaries.", "Liquidity":"About 40% sits in private markets. Hold liquid reserves covering two years of spending plus outstanding capital commitments, so a call never forces a sale.", "Taxes":"Coordinate asset location across the trust, LLC, IRA, and taxable accounts. Manage the concentrated legacy position with an eye to gains realization and charitable offset.", "Legal & regulatory":"Six entities including an irrevocable GST trust. Confirm trustee powers, registrations, and beneficiary designations annually.", "Unique circumstances":"Concentrated legacy stock in the taxable account. Outstanding unfunded private market commitments. Next-gen beneficiaries brought into the plan progressively." };
+  const [ips,setIps]=useState(INIT);const [edit,setEdit]=useState(null);
+  const order=["Return","Risk","Time horizon","Liquidity","Taxes","Legal & regulatory","Unique circumstances"];
+  return <div style={{padding:"6px 18px 0"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+      <div><Eyebrow>Policy</Eyebrow><div style={{fontSize:21,fontWeight:700,color:c.ink,marginTop:3}}>Investment Policy</div><div style={{fontSize:11.5,color:c.muted,marginTop:2,display:"flex",alignItems:"center",gap:5}}><I.clock size={11} color={c.muted}/> Last reviewed Apr 2026</div></div>
+      <button style={{display:"flex",alignItems:"center",gap:5,border:"1px solid "+c.line,background:c.card,cursor:"pointer",color:c.pine,borderRadius:10,padding:"8px 11px",fontSize:12,fontWeight:700}}><I.down size={13} color={c.pine}/> PDF</button>
+    </div>
+    {order.map((k,i)=><Card key={k} style={{marginBottom:10,padding:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:20,height:20,borderRadius:6,background:c.sageSoft,color:c.pine,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{i+1}</span><span style={{fontSize:13.5,fontWeight:700,color:c.ink}}>{k}</span></div><button onClick={()=>setEdit(edit===k?null:k)} style={{border:"none",background:"transparent",cursor:"pointer",color:c.pine,fontSize:12,fontWeight:700,display:"flex",alignItems:"center",gap:4}}>{edit===k?<><I.check size={13} color={c.pine}/> Done</>:<><I.pencil size={12} color={c.pine}/> Edit</>}</button></div>
+      {edit===k ? <textarea value={ips[k]} onChange={e=>setIps({...ips,[k]:e.target.value})} rows={5} style={{width:"100%",border:"1.5px solid "+c.pine,borderRadius:10,padding:10,fontSize:12.5,color:c.ink,lineHeight:1.5,resize:"vertical",outline:"none"}}/> : <div style={{fontSize:12.5,color:c.muted,lineHeight:1.5}}>{ips[k]}</div>}
+    </Card>)}
+    <div style={{fontSize:10.5,color:c.muted,margin:"4px 2px 20px",lineHeight:1.45}}>Proposed edits route to your advisor for review before the policy is amended.</div>
+  </div>;
+}
+
+function Research(){
+  const [seg,setSeg]=useState("firm");
+  return <div style={{padding:"6px 18px 0"}}>
+    <div style={{marginBottom:14}}><Seg opts={[["firm","Sepio research"],["funds","Your funds"]]} val={seg} set={setSeg}/></div>
+    {seg==="firm" && <>{RESEARCH.firm.map((r,i)=><button key={r.title} style={{width:"100%",textAlign:"left",cursor:"pointer",background:i===0?c.pineDeep:c.card,border:"1px solid "+(i===0?c.pineDeep:c.line),borderRadius:16,padding:16,marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:9.5,fontWeight:700,letterSpacing:"0.05em",color:i===0?c.sage:c.pine,background:i===0?"rgba(111,165,140,0.16)":c.sageSoft,borderRadius:99,padding:"3px 9px"}}>{r.tag.toUpperCase()}</span><span style={{fontSize:10.5,color:i===0?"rgba(255,255,255,0.5)":c.muted}}>{r.date} - {r.read}</span></div><div style={{fontSize:15.5,fontWeight:700,color:i===0?"white":c.ink,marginTop:10,lineHeight:1.3}}>{r.title}</div><div style={{fontSize:12,color:i===0?"rgba(255,255,255,0.65)":c.muted,marginTop:5,lineHeight:1.45}}>{r.teaser}</div></button>)}<div style={{fontSize:10.5,color:c.muted,margin:"4px 2px 20px",lineHeight:1.45}}>Our house view, written for you rather than for a committee.</div></>}
+    {seg==="funds" && <>{RESEARCH.funds.map((f,i)=><Card key={i} style={{marginBottom:10,padding:15}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:9.5,fontWeight:700,color:c.muted,letterSpacing:"0.05em"}}>{f.type.toUpperCase()}</span><span style={{fontSize:10.5,color:c.muted}}>{f.date}</span></div><div style={{fontSize:14,fontWeight:700,color:c.ink,marginTop:7}}>{f.fund}</div><div style={{fontSize:10.5,color:c.pine,background:c.sageSoft,display:"inline-block",borderRadius:99,padding:"2px 8px",marginTop:5,fontWeight:600}}>{f.cat}</div><div style={{fontSize:12,color:c.muted,marginTop:8,lineHeight:1.5}}>{f.note}</div>{f.flag && <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,background:c.honeySoft,borderRadius:10,padding:"8px 10px"}}><I.bell size={12} color={c.honey}/><span style={{fontSize:11,color:c.ink,fontWeight:600}}>{f.flag}</span></div>}</Card>)}<div style={{fontSize:10.5,color:c.muted,margin:"4px 2px 20px",lineHeight:1.45}}>Letters, calls, and distributions for the funds you own. No inbox archaeology.</div></>}
+  </div>;
+}
+
+// ---------------- NEXT GEN ----------------
+function NextGen({tab}){
+  const [invested,setInvested]=useState(false);
+  if(tab==="home") return <div style={{padding:"6px 18px 0"}}>
+    <div style={{background:c.pineDeep,borderRadius:22,padding:20,color:"white"}}>
+      <Eyebrow><span style={{color:"rgba(255,255,255,0.55)"}}>{NG.trust}</span></Eyebrow>
+      <div style={{fontSize:36,fontWeight:700,marginTop:6,fontVariantNumeric:"tabular-nums"}}>{big(NG.val)}</div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}><I.spark size={13} color={c.sage} w={2.2}/><span style={{color:c.sage,fontWeight:600,fontSize:13}}>+{NG.ytd}% this year</span></div>
+    </div>
+    <div style={{fontSize:12.5,color:c.muted,margin:"14px 2px 8px",lineHeight:1.5}}>This is <b style={{color:c.ink}}>your</b> share, not the whole family's. Here's what it's doing.</div>
+    <Card><Eyebrow>What you're invested in</Eyebrow><div style={{marginTop:10}}><AllocRow data={ALLOC}/></div></Card>
+    <Card style={{marginTop:12,padding:14}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><Eyebrow>Your taxes this year</Eyebrow><span style={{fontSize:9.5,fontWeight:700,color:c.pine,background:c.sageSoft,borderRadius:99,padding:"2px 8px"}}>YOUR TRUST</span></div><div style={{fontSize:12.5,color:c.muted,marginTop:8,lineHeight:1.45}}>We harvested <b style={{color:c.pine}}>{big(TAX.self.harvested)}</b> in losses in your trust, saving about <b style={{color:c.ink}}>{big(TAX.self.saved)}</b>. Nothing for you to do.</div></Card>
+    <button style={{width:"100%",marginTop:12,marginBottom:20,border:"none",cursor:"pointer",background:c.sageSoft,color:c.pine,borderRadius:14,padding:14,fontWeight:700,fontSize:13.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}><I.book size={16} color={c.pine}/> What does "diversifiers" even mean?</button>
+  </div>;
+  if(tab==="invest") return <Invest invested={invested} setInvested={setInvested} context="You have $40,000 in a checking account earning nothing." fundLabel="Move from checking"/>;
+  if(tab==="plan") return <Plan start={1850000} contrib={24000} label="your money over time" grow/>;
+  if(tab==="learn") return <Learn/>;
+  return null;
+}
+
+// ---------------- PROSPECT ----------------
+function Prospect({tab}){
+  const [linked,setLinked]=useState([]);const [invested,setInvested]=useState(false);
+  if(tab==="link") return <Link linked={linked} setLinked={setLinked}/>;
+  if(tab==="plan") return <Plan start={linked.length?260000:0} contrib={30000} label="your plan" grow prospect={!linked.length}/>;
+  if(tab==="invest") return <Invest invested={invested} setInvested={setInvested} context="No account minimum. Managed by Sepio, a fiduciary." fundLabel="Fund your account"/>;
+  if(tab==="learn") return <Learn/>;
+  return null;
+}
+function Link({linked,setLinked}){
+  const banks=[["Fidelity",148000],["Chase",22000],["Schwab",64000],["Robinhood",26000]];
+  const total=linked.reduce((s,n)=>s+banks.find(b=>b[0]===n)[1],0);
+  return <div style={{padding:"6px 18px 0"}}>
+    <Eyebrow>Get started</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.ink,margin:"3px 0 4px"}}>See everything in one place</div>
+    <div style={{fontSize:12.5,color:c.muted,marginBottom:16,lineHeight:1.5}}>Link your accounts to get a real plan. No advisor call, no commitment. Secured by Plaid.</div>
+    {banks.map(([n,v])=>{const on=linked.includes(n);return <button key={n} onClick={()=>setLinked(on?linked.filter(x=>x!==n):[...linked,n])} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",background:on?c.sageSoft:c.card,border:"1.5px solid "+(on?c.pine:c.line),borderRadius:14,padding:"14px 16px",marginBottom:10}}><span style={{display:"flex",alignItems:"center",gap:10}}><span style={{width:34,height:34,borderRadius:8,background:on?c.pine:c.stone,color:on?"white":c.muted,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14}}>{n[0]}</span><span style={{fontSize:14,fontWeight:600,color:c.ink}}>{n}</span></span>{on?<span style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:13,fontWeight:700,color:c.ink}}>{big(v)}</span><I.check size={17} color={c.pine}/></span>:<span style={{fontSize:12,color:c.pine,fontWeight:700}}>Link</span>}</button>;})}
+    {linked.length>0 && <Card style={{marginTop:6,background:c.pineDeep,border:"none"}}><Eyebrow><span style={{color:"rgba(255,255,255,0.55)"}}>Linked net worth</span></Eyebrow><div style={{fontSize:30,fontWeight:700,color:"white",marginTop:4,fontVariantNumeric:"tabular-nums"}}>{big(total)}</div><div style={{fontSize:11.5,color:"rgba(255,255,255,0.6)",marginTop:2}}>Now open Plan to see where it takes you.</div></Card>}
+    <div style={{fontSize:10.5,color:c.muted,margin:"12px 2px 20px",lineHeight:1.45}}><I.lock size={10} color={c.muted}/> Held-away, read-only. We never move money you haven't authorized.</div>
+  </div>;
+}
+
+// ---------------- shared: Invest, Plan, Learn ----------------
+function Invest({invested,setInvested,context,fundLabel}){
+  const [step,setStep]=useState(0);const [ans,setAns]=useState([1,1,1]);
+  const Q=[{q:"If your account dropped 20%, you'd:",o:["Sell","Wait","Buy more"]},{q:"You'll need this money in:",o:["<3 yrs","3-10 yrs","10+ yrs"]},{q:"You want to:",o:["Play it safe","Balance","Grow it"]}];
+  const score=ans.reduce((s,x)=>s+x,0);const profile=score<=2?"Conservative":score<=5?"Balanced":"Growth";const M=MODELS[profile];
+  if(invested) return <div style={{padding:"40px 24px",textAlign:"center"}}>
+    <div style={{width:64,height:64,borderRadius:99,background:c.sageSoft,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 18px"}}><I.check size={32} color={c.pine} w={2.4}/></div>
+    <div style={{fontSize:20,fontWeight:700,color:c.ink}}>You're invested.</div>
+    <div style={{fontSize:13,color:c.muted,marginTop:8,lineHeight:1.5,maxWidth:280,margin:"8px auto 0"}}>Your {profile.toLowerCase()} portfolio is live and managed by Sepio. We rebalance and tax-manage it automatically. Nothing else to do.</div>
+    <div style={{marginTop:20,padding:14,background:c.bg,borderRadius:14,textAlign:"left"}}><div style={{display:"flex",alignItems:"center",gap:8,color:c.pine,fontSize:12,fontWeight:700}}><I.shield size={14} color={c.pine}/> Managed account - discretionary</div><div style={{fontSize:11,color:c.muted,marginTop:5,lineHeight:1.45}}>A fiduciary and a CFA behind the button. Adjust or talk to a human anytime, but you never have to.</div></div>
+    <button onClick={()=>{setInvested(false);setStep(0);}} style={{marginTop:18,border:"none",background:"transparent",color:c.muted,cursor:"pointer",fontSize:12,fontWeight:600}}>Reset demo</button>
+  </div>;
+  return <div style={{padding:"6px 18px 0"}}>
+    <Eyebrow>Invest</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.ink,margin:"3px 0 4px"}}>{step===0?"Three quick questions":"Your recommended portfolio"}</div>
+    <div style={{fontSize:12,color:c.muted,marginBottom:16,lineHeight:1.45}}>{context}</div>
+    {step===0 && <>{Q.map((q,qi)=><div key={qi} style={{marginBottom:16}}><div style={{fontSize:13.5,fontWeight:600,color:c.ink,marginBottom:8}}>{q.q}</div><div style={{display:"flex",gap:7}}>{q.o.map((o,oi)=>{const on=ans[qi]===oi;return <button key={oi} onClick={()=>setAns(ans.map((x,i)=>i===qi?oi:x))} style={{flex:1,cursor:"pointer",border:"1.5px solid "+(on?c.pine:c.line),background:on?c.sageSoft:c.card,color:on?c.pine:c.ink,borderRadius:11,padding:"11px 4px",fontSize:12,fontWeight:on?700:500}}>{o}</button>;})}</div></div>)}<button onClick={()=>setStep(1)} style={{width:"100%",marginTop:4,marginBottom:20,border:"none",cursor:"pointer",background:c.pine,color:"white",borderRadius:14,padding:15,fontWeight:700,fontSize:15}}>See my portfolio</button></>}
+    {step===1 && <>
+      <Card><div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Eyebrow>{profile} portfolio</Eyebrow><span style={{fontSize:11,color:c.muted}}>managed by Sepio</span></div><div style={{marginTop:10}}><AllocRow data={M.a}/></div></Card>
+      <div style={{display:"flex",gap:10,marginTop:12}}><Card style={{flex:1,padding:14}}><Eyebrow>Expected</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.pine,marginTop:6}}>{M.ret.toFixed(1)}%</div><div style={{fontSize:10.5,color:c.muted}}>long-term return</div></Card><Card style={{flex:1,padding:14}}><Eyebrow>Managed</Eyebrow><div style={{fontSize:14,fontWeight:700,color:c.ink,marginTop:8,lineHeight:1.3}}>Rebalanced +<br/>tax-managed</div></Card></div>
+      <div style={{background:c.sageSoft,borderRadius:14,padding:"12px 14px",marginTop:12,display:"flex",gap:9}}><I.shield size={15} color={c.pine}/><div style={{fontSize:11.5,color:c.ink,lineHeight:1.45}}>This is a <b>managed account</b>, not a brokerage trade. Grant discretion once, then Sepio runs it. It feels like a button; there's a fiduciary behind it.</div></div>
+      <button onClick={()=>setInvested(true)} style={{width:"100%",marginTop:14,border:"none",cursor:"pointer",background:c.pine,color:"white",borderRadius:14,padding:16,fontWeight:700,fontSize:15}}>{fundLabel} & invest</button>
+      <button onClick={()=>setStep(0)} style={{width:"100%",marginTop:8,marginBottom:20,border:"none",background:"transparent",color:c.muted,cursor:"pointer",fontSize:12,fontWeight:600}}>Back</button>
+    </>}
+  </div>;
+}
+function Plan({start,contrib,label,grow,prospect}){
+  const [yr,setYr]=useState(grow?20:30);const [amt,setAmt]=useState(grow?contrib:2800000);
+  const res=useMemo(()=>runmc({start,contrib:grow?amt:-amt,years:yr,ret:6.5,vol:11}),[amt,yr,start]);
+  const end=res.path[res.path.length-1];
+  if(prospect) return <div style={{padding:"40px 24px",textAlign:"center"}}><div style={{fontSize:17,fontWeight:700,color:c.ink}}>Link an account first</div><div style={{fontSize:13,color:c.muted,marginTop:8,lineHeight:1.5}}>Open Link and connect at least one account, then your plan appears here.</div></div>;
+  return <div style={{padding:"6px 18px 0"}}>
+    <Eyebrow>{grow?"Your money over time":"Sustaining your plan"}</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.ink,margin:"3px 0 12px"}}>{grow?"Where this goes":"Will it last?"}</div>
+    <Card style={{padding:"15px 10px 8px"}}><div style={{padding:"0 6px"}}><Eyebrow>Projected {label}</Eyebrow></div><div style={{marginTop:8}}><Fan path={res.path} years={yr}/></div>
+      <div style={{display:"flex",gap:8,padding:"2px 6px 4px"}}><div style={{flex:1,background:c.bg,borderRadius:10,padding:"9px 10px"}}><div style={{fontSize:14,fontWeight:700,color:c.ink}}>{big(end.p50)}</div><div style={{fontSize:9.5,color:c.muted}}>median</div></div><div style={{flex:1,background:c.bg,borderRadius:10,padding:"9px 10px"}}><div style={{fontSize:14,fontWeight:700,color:c.pine}}>{big(end.p90)}</div><div style={{fontSize:9.5,color:c.muted}}>upside</div></div><div style={{flex:1,background:c.bg,borderRadius:10,padding:"9px 10px"}}><div style={{fontSize:14,fontWeight:700,color:c.clay}}>{big(end.p10)}</div><div style={{fontSize:9.5,color:c.muted}}>low</div></div></div>
+    </Card>
+    <Card style={{marginTop:12}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}><span style={{fontSize:12.5,color:c.ink,fontWeight:600}}>{grow?"Add per year":"Spend per year"}</span><span style={{fontSize:13,color:c.pine,fontWeight:700}}>{big(amt)}</span></div><input type="range" min={grow?0:500000} max={grow?60000:5000000} step={grow?1000:100000} value={amt} onChange={e=>setAmt(Number(e.target.value))} style={{width:"100%"}}/><div style={{display:"flex",justifyContent:"space-between",margin:"14px 0 7px"}}><span style={{fontSize:12.5,color:c.ink,fontWeight:600}}>Years</span><span style={{fontSize:13,color:c.pine,fontWeight:700}}>{yr}</span></div><input type="range" min={5} max={40} step={1} value={yr} onChange={e=>setYr(Number(e.target.value))} style={{width:"100%"}}/></Card>
+    <div style={{fontSize:10.5,color:c.muted,margin:"12px 2px 20px",lineHeight:1.45}}>{SIMS} simulated markets. Illustrative, reviewed by your advisor before it becomes your plan.</div>
+  </div>;
+}
+function Learn(){
+  const items=[["Why we build by role, not asset class","5 min"],["What direct indexing does for your taxes","4 min"],["How a trust works, in plain English","6 min"],["Diversifiers: the money that zigs when stocks zag","3 min"]];
+  return <div style={{padding:"6px 18px 0"}}><Eyebrow>Learn</Eyebrow><div style={{fontSize:22,fontWeight:700,color:c.ink,margin:"3px 0 14px"}}>Understand your money</div>
+    {items.map(([t,r],i)=><button key={i} style={{width:"100%",textAlign:"left",cursor:"pointer",background:i===0?c.pineDeep:c.card,border:"1px solid "+(i===0?c.pineDeep:c.line),borderRadius:16,padding:16,marginBottom:10}}><div style={{fontSize:9.5,fontWeight:700,letterSpacing:"0.05em",color:i===0?c.sage:c.pine}}>{i===0?"START HERE":"EXPLAINER"}</div><div style={{fontSize:14.5,fontWeight:700,color:i===0?"white":c.ink,marginTop:8,lineHeight:1.3}}>{t}</div><div style={{fontSize:11,color:i===0?"rgba(255,255,255,0.6)":c.muted,marginTop:6}}>{r} read</div></button>)}
+    <div style={{fontSize:10.5,color:c.muted,margin:"4px 2px 20px",lineHeight:1.45}}>Plain-language explainers, written for you, not for a committee.</div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
